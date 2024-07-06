@@ -1,10 +1,13 @@
 const express = require('express');
 const bodyparser = require('body-parser');
 const koneksi = require('./config/database');
-const multer = requier('multer');
+const multer = require('multer');
 const path = require('path');
 const app = express();
-const port = 3000;
+const port = process.env.port || 5000;
+
+const cors =require('cors');
+app.use(cors());
 
 //set bodyparser
 app.use(bodyparser.json())
@@ -13,22 +16,21 @@ app.use(bodyparser.urlencoded({extended: true}))
 app.use(express.static('./public'))
 
 // Use of multer
-var storage = multer.diskstorage({
-    destination: (req, file, callback) => {
-        callback(null, './public/images')
+var storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+      cb(null, './public/images/')
     },
-    filename: (req, file, callback)=>{
-        callback(null, file.fieldname +'-'+
-         date.no() + path.extname(file.originalname)) 
+    filename: function (req, file, cb) {
+      cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname))
     }
-})
+  })
 
 var upload = multer({
     storage: storage
 });
 
 // read data / get data
-app.get('/api/movie', (req, res) => {
+app.get('/api/movies', (req, res) => {
     // buat query sql
     const querySql = 'SELECT * FROM movies';
 
@@ -87,10 +89,10 @@ app.post('/api/movies',upload.single('image'),(req,res)=> {
     })
     }else{
         console.log(req.file.filename)
-        var imgsrc = 'http://localhost:3000/image' + req.file.filename
+        var imgsrc = 'http://localhost:5000/images/' + req.file.filename
         // buat variable penampung data query sql
         const data = { ...req.body};
-        const querySql = 'INSERT INTO movies (judul, rating, deskripsi, sutradara) VALUES (?,?,?,?,?);';
+        const querySql = 'INSERT INTO movies (judul, rating, deskripsi, sutradara, foto) VALUES (?,?,?,?,?);';
         const judul = req.body.judul;
         const rating = req.body.rating;
         const deskripsi = req.body.deskripsi;
